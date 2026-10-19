@@ -249,17 +249,20 @@ class _PhysicalRecursionExceeded(SchemaValidationError):
 
 
 # Depth at which schema recursion is considered pathological. Legitimate
-# MCP tool schemas almost never exceed 3 levels of nesting
-# (``properties.foo.items.properties.bar`` is already depth 4). A cap of
-# 5 accommodates edge cases without giving adversaries room to build
-# gigantic nested structures designed to exhaust the sandbox's type
-# renderer.
+# MCP tool schemas usually stay within 3-4 levels of nesting
+# (``properties.foo.items.properties.bar`` is already depth 4), but real
+# production tools go deeper: form-filling tools that model arrays of
+# per-field option objects measure depth 6, and at least one hosted
+# remote MCP reported depths fluctuating between 6 and 9 across fetches
+# of the same tool. A cap of 12 accommodates those cases while still
+# bounding adversaries well away from the gigantic nested structures
+# designed to exhaust the sandbox's type renderer.
 #
 # Deliberately not in ``__all__``: ``GatewayServer`` remains the only
 # public API surface. These names exist so the internal call chain (and
 # the tests) can reference the shipped bounds instead of hardcoding them
 # in four places.
-DEFAULT_MAX_SCHEMA_DEPTH = 5
+DEFAULT_MAX_SCHEMA_DEPTH = 12
 
 # Upper ceiling any caller may configure *max_depth* to. Generous relative
 # to the "3-4 levels is typical" reasoning behind DEFAULT_MAX_SCHEMA_DEPTH

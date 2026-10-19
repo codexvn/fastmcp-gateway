@@ -156,13 +156,11 @@ class TestValidateInputSchema:
 
     def test_rejects_excessive_depth(self) -> None:
         """Nesting beyond the depth cap is rejected."""
-        # Build depth 7: object -> properties -> a -> properties -> b ->
-        # properties -> c -> properties -> d -> type
+        # Build depth 15: six nested wrappers plus the root wrap, well
+        # past the default cap of 12 (the root dict itself is depth 1).
         deep: dict = {"type": "string"}
-        for key in ("d", "c", "b", "a"):
+        for key in ("f", "e", "d", "c", "b", "a"):
             deep = {"type": "object", "properties": {key: deep}}
-        # Wrap one more time so the overall depth clearly exceeds the
-        # cap of 5 (the root dict itself is depth 1).
         wrapped = {"type": "object", "properties": {"root": deep}}
         with pytest.raises(SchemaValidationError, match="nesting depth"):
             validate_input_schema(wrapped)
@@ -242,9 +240,14 @@ def _nested_schema(levels: int) -> dict:
     return {"type": "object", "properties": {"root": deep}}
 
 
-# Three wrappers => depth 7, the first odd depth clear of the default cap
-# of 5 and comfortably under the raised cap of 10 used below.
+# Three wrappers => depth 7: rejected under the old default of 5, now
+# comfortably inside the default cap of 12 (real production tools nest
+# this deep) and still usable with an explicitly raised cap below.
 _DEPTH_7_SCHEMA = _nested_schema(2)
+
+# Six wrappers => depth 15, the first odd depth clear of the default
+# cap of 12.
+_DEPTH_15_SCHEMA = _nested_schema(6)
 
 
 class TestConfigurableSchemaDepth:
@@ -257,10 +260,16 @@ class TestConfigurableSchemaDepth:
         """
         assert _schema_depth(_DEPTH_7_SCHEMA, max_depth=MAX_ALLOWED_SCHEMA_DEPTH) == 7
 
-    def test_default_still_rejects_depth_7(self) -> None:
-        """Omitting max_depth preserves the existing cap of 5 -- no behavior change."""
+    def test_default_now_admits_depth_7(self) -> None:
+        """Omitting max_depth applies the default cap of 12, so depth 7 --
+        rejected under the old default of 5 -- now passes. Real production
+        tools (form-fill schemas, hosted map tools) nest this deep."""
+        assert validate_input_schema(_DEPTH_7_SCHEMA) == _DEPTH_7_SCHEMA
+
+    def test_default_still_rejects_depth_beyond_the_cap(self) -> None:
+        """The raised default is still a cap: depth 15 is rejected."""
         with pytest.raises(SchemaValidationError):
-            validate_input_schema(_DEPTH_7_SCHEMA)
+            validate_input_schema(_DEPTH_15_SCHEMA)
 
     def test_raised_cap_admits_the_same_schema(self) -> None:
         """The identical schema passes once the caller raises max_depth."""

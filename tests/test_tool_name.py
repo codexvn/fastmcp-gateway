@@ -41,6 +41,15 @@ class TestValidateToolNameAccepts:
             "domain_executeQuery",
             "domain_listItems",
             "executeQuery",
+            # Kebab-case tool names are common in the wild
+            # (``execute-command``) and multi-server proxies embed
+            # the server name in the tool name. Hyphens can't form a
+            # valid Python identifier, so they can't shadow anything.
+            "has-hyphen",
+            "execute-command",
+            "read-file",
+            "sshMcpServer__execute-command",
+            "chrome-devtools__take_screenshot",
         ],
     )
     def test_accepts_legitimate_name(self, name: str) -> None:
@@ -60,8 +69,8 @@ class TestValidateToolNameRejects:
         [
             "_leading_underscore",  # underscore first
             "1_leading_digit",  # digit first
+            "-leading-hyphen",  # hyphen first
             "Capitalized",  # uppercase first
-            "has-hyphen",  # hyphen not allowed
             "has space",  # space not allowed
             "has.dot",  # dot not allowed
             "has/slash",  # slash not allowed
