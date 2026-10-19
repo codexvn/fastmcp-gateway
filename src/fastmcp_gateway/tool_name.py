@@ -31,9 +31,15 @@ import re
 # ``listItems``); a strict snake-case rule would reject valid
 # production tools while delivering no additional security benefit
 # (both forms are valid Python identifiers that can't shadow
-# builtins the denylist catches). 64 characters is generous without
-# making the name unwieldy as a Python identifier.
-_TOOL_NAME_RE = re.compile(r"^[a-z][a-zA-Z0-9_]{0,63}$")
+# builtins the denylist catches). Hyphens are likewise allowed after
+# the first character: kebab-case tool names are common in the wild
+# (e.g. ``execute-command``, ``read-file``) and multi-server proxies
+# often embed the server name in the tool name
+# (``sshMcpServer__execute-command``). A name containing a hyphen can
+# never be a valid Python identifier, so it cannot shadow anything in
+# the ``execute_code`` sandbox namespace. 64 characters is generous
+# without making the name unwieldy as a Python identifier.
+_TOOL_NAME_RE = re.compile(r"^[a-z][a-zA-Z0-9_-]{0,63}$")
 
 # Names that pass the regex but would shadow Python keywords,
 # soft-keywords, or builtins when the tool becomes a binding in the
@@ -58,10 +64,11 @@ def validate_tool_name(name: str) -> str | None:
     A safe tool name satisfies every check:
 
     * Non-empty.
-    * Matches ``[a-z][a-zA-Z0-9_]{0,63}`` — starts with a lowercase
-      letter, contains only alphanumerics and underscores, length 1
-      to 64. Mixed case is accepted so camelCase names advertised
-      by upstream MCP servers (e.g. ``executeQuery``) validate.
+    * Matches ``[a-z][a-zA-Z0-9_-]{0,63}`` — starts with a lowercase
+      letter, contains only alphanumerics, underscores and hyphens,
+      length 1 to 64. Mixed case is accepted so camelCase names
+      advertised by upstream MCP servers (e.g. ``executeQuery``)
+      validate.
     * Is not a Python keyword, soft-keyword, or builtin (which would
       shadow the binding inside the ``execute_code`` sandbox
       namespace).
@@ -82,8 +89,8 @@ def validate_tool_name(name: str) -> str | None:
     if not _TOOL_NAME_RE.fullmatch(name):
         return (
             "name does not match required shape "
-            "^[a-z][a-zA-Z0-9_]{0,63}$ (lowercase first char, "
-            "alphanumeric + underscore only, length 1 to 64)"
+            "^[a-z][a-zA-Z0-9_-]{0,63}$ (lowercase first char, "
+            "alphanumeric + underscore + hyphen only, length 1 to 64)"
         )
     if name in _DANGEROUS_IDENTIFIERS:
         return f"name {name!r} shadows a Python keyword or builtin"
