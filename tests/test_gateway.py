@@ -71,11 +71,11 @@ class TestMaxSchemaDepth:
     ``deep_schema_tool`` factory in conftest."""
 
     @pytest.mark.asyncio
-    async def test_default_rejects_schema_deeper_than_five(
+    async def test_default_rejects_schema_deeper_than_twelve(
         self, deep_schema_tool: Callable[..., Any], patch_upstream_client: Callable[..., Any]
     ) -> None:
-        """Depth 7 — over the unchanged default cap of 5."""
-        with patch_upstream_client(deep_schema_tool(3)):
+        """Depth 13 — over the raised default cap of 12."""
+        with patch_upstream_client(deep_schema_tool(6)):
             gw = GatewayServer({"svc": "http://svc:8080/mcp"})
             await gw.upstream_manager.populate_domain("svc")
 
@@ -85,7 +85,8 @@ class TestMaxSchemaDepth:
     async def test_default_admits_schema_within_five(
         self, deep_schema_tool: Callable[..., Any], patch_upstream_client: Callable[..., Any]
     ) -> None:
-        """Depth 5 — exactly at the unchanged default cap."""
+        """Depth 5 — exactly at the old default cap of 5, comfortably
+        inside the raised default cap of 12."""
         with patch_upstream_client(deep_schema_tool(2)):
             gw = GatewayServer({"svc": "http://svc:8080/mcp"})
             await gw.upstream_manager.populate_domain("svc")

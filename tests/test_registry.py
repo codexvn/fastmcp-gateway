@@ -457,9 +457,9 @@ class TestPopulateDomain:
         assert info[0].description == "My domain description"
 
     def test_populate_default_max_schema_depth_rejects_deep_tool(self, empty_registry: ToolRegistry) -> None:
-        """Omitting max_schema_depth preserves the existing cap of 5."""
+        """Omitting max_schema_depth applies the default cap of 12: depth 15 is rejected."""
         deep: dict = {"type": "string"}
-        for key in ("b", "a"):
+        for key in ("f", "e", "d", "c", "b", "a"):
             deep = {"type": "object", "properties": {key: deep}}
         raw_tools = [
             {"name": "dom_shallow", "inputSchema": {"type": "object"}},
