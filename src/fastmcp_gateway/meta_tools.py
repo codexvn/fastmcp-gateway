@@ -87,7 +87,7 @@ def _json_result(payload: dict[str, Any]) -> ToolResult:
     result's text.
     """
     return ToolResult(
-        content=[TextContent(type="text", text=json.dumps(payload))],
+        content=[TextContent(type="text", text=json.dumps(payload, ensure_ascii=False))],
         structured_content=payload,
     )
 
@@ -932,7 +932,7 @@ def register_meta_tools(
                     structured_content=upstream_structured,
                 )
 
-            result_text = json.dumps({"tool": tool_name, "result": result_text})
+            result_text = json.dumps({"tool": tool_name, "result": result_text}, ensure_ascii=False)
 
             # After execute — pipeline transforms. An
             # ``after_execute`` hook may raise ``ExecutionDenied``
@@ -995,7 +995,8 @@ def register_meta_tools(
                         }
                         for d in diffs
                     ],
-                }
+                },
+                ensure_ascii=False,
             )
 
     # ------------------------------------------------------------------

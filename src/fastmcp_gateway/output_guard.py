@@ -380,7 +380,7 @@ class OutputGuardHook:
 
         envelope["result"] = processed
         envelope["_output_guard"] = {"mode": self._mode, "modified": True}
-        return json.dumps(envelope)
+        return json.dumps(envelope, ensure_ascii=False)
 
     # Expose for introspection / tests. The ``mode`` annotation keeps
     # the narrow ``Literal`` type so callers that assign from it into

@@ -89,7 +89,7 @@ def error_response(code: str, message: str, **details: Any) -> str:
     **details:
         Arbitrary key-value pairs included in the ``details`` dict.
     """
-    return json.dumps(error_payload(code, message, **details))
+    return json.dumps(error_payload(code, message, **details), ensure_ascii=False)
 
 
 # One element of a ``WWW-Authenticate`` challenge list (RFC 9110 section 11.6.1):
